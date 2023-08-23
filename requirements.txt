@@ -1,0 +1,5 @@
+streamlit #for frontend
+pandas
+geopandas
+pandera
+pandera[geopandas]
