@@ -4,13 +4,19 @@
 
 A webapp that allows users to create and manage their own transport company.
 
+## MVP
+
+- [ ] A user can create a truck with a name, a model, a color, it's current location and it's destination.
+- [ ] The system must be able to calculate truck routes.
+- [ ] A user can see the routes being walked by the trucks on a map.
+
 ## User Stories
 
 - [ ] A user can create a truck with a name, a model, a maximum weight, a maximum volume and it's current location.
 - [ ] The system must be able to create random trucks.
 - [ ] A user can create items with a name, a weight, a volume, the current location and it's destination.
 - [ ] The system must be able to create random items.
-- [ ] A user can see the routes being walked by the trucks.
+- [ ] A user can see the routes being walked by the trucks on a map.
 
 - [ ] At each stop in the route, the truck must be able to load and unload items.
 - [ ] The system must be able to calculate the best routes for a given number of trucks deliver all the items and assign it for each truck.

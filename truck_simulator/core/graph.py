@@ -1,43 +1,13 @@
 import heapq
 from dataclasses import dataclass
-from typing import List, Dict, Set, Optional, Generator, Tuple, TypeAlias, Collection
-from truck_simulator.core.types import Location, GeoLocation
+from typing import List, Dict, Set, Optional, Generator, Tuple, TypeAlias, Iterable
+from truck_simulator.core.types import Location
 
 """
 A map will be a graph of nodes, where each node contains a location on the map.
 """
 
-@dataclass
-class Node:
-    """
-    A node on the graph.
-
-    Attributes:
-        location (Location): the name of the location on the map.
-        coordintes (GeoLocation): the coordinates of the location on the map.
-    """
-    location: Location
-    coordintes: GeoLocation
-
-    def __hash__(self) -> Location:
-        return hash(self.location)
-
-    def __eq__(self, __value) -> bool:
-        return self.location == __value
-    
-def make_node(location: Location, coordintes: GeoLocation) -> Node:
-    """
-    Create a node on the graph.
-
-    Args:
-        location (Location): the name of the location on the map.
-        coordintes (GeoLocation): the coordinates of the location on the map.
-
-    Returns:
-        Node: the node on the graph.
-    """
-    return Node(location, coordintes)
-
+Node: TypeAlias = Location
 Weight: TypeAlias = int
 
 @dataclass
@@ -53,10 +23,12 @@ class Edge:
     weight: Weight
 
 
-    def __hash__(self) -> Location:
+    def __hash__(self) -> int:
         return hash((self.nodes[0], self.nodes[1]))
 
-    def __eq__(self, __value) -> bool:
+    def __eq__(self, __value: object) -> bool:
+        if type(__value) != Edge:
+            return False
         return self.nodes == __value.nodes or self.nodes == (__value.nodes[1], __value.nodes[0])
 
 def make_edge(node1: Node, node2: Node, weight: Optional[Weight] = None) -> Edge:
@@ -86,7 +58,7 @@ class Path:
     data: Dict[Node, Node]
 
     
-def step(path, curr: Node) -> Node:
+def step(path: Path, curr: Node) -> Node:
     """
     Get the next node on the path.
 
@@ -98,7 +70,7 @@ def step(path, curr: Node) -> Node:
     """
     return path.data[curr]
 
-def make_path_from_edge_list(start: Node, edge_list: Collection[Edge]) -> Path:
+def make_path_from_edge_list(start: Node, edge_list: Iterable[Edge]) -> Path:
     """
     Create a path from a list of edges.
 
@@ -114,14 +86,14 @@ def make_path_from_edge_list(start: Node, edge_list: Collection[Edge]) -> Path:
         path[edge.nodes[0]] = edge.nodes[1]
     return Path(start, path)
 
-def walk(path: Path, curr: Optional[Node] = None) -> Generator[Node, None, None]:
+def walk(path: Path, _curr: Optional[Node] = None) -> Generator[Node, None, None]:
     """
     Get the path as a list of nodes.
 
     Returns:
         List[Node]: the path as a list of nodes.
     """
-    curr: Node = curr or path.start
+    curr: Node = _curr or path.start
 
     # checks only dictionary keys
     while curr in path.data:
@@ -149,15 +121,15 @@ def make_graph(nodes: Set[Node], edges: Set[Edge]) -> Graph:
     Create a graph representation of a map.
 
     Args:
-        nodes (List[Node]): the nodes on the map.
-        edges (List[Edge]): the edges between nodes on the map.
+        nodes (Set[Node]): the nodes on the map.
+        edges (Set[Edge]): the edges between nodes on the map.
 
     Returns:
         Graph: the graph representation of a map.
     """
-    adjacency_list: Dict[Node, List[Node]] = {}
+    adjacency_list: Dict[Node, Set[Tuple[Node, Weight]]] = {}
     for node in nodes:
-        adjacency_list[node] = set()
+        adjacency_list[node]= set()
     for edge in edges:
         adjacency_list[edge.nodes[0]].add((edge.nodes[1], edge.weight))
         adjacency_list[edge.nodes[1]].add((edge.nodes[0], edge.weight))
@@ -194,7 +166,7 @@ def get_neighborhood(node: Node, graph: Graph) -> Set[Tuple[Node, Weight]]:
     """
     return graph.adjacency_list[node]
 
-def make_path(start: Node, destiny: Node, graph: Graph) -> Path:
+def make_path(start: Node, destiny: Node, graph: Graph) -> Optional[Path]:
     """
     Create a path between two nodes. Implements dijkstra's algorithm.
 
@@ -208,14 +180,14 @@ def make_path(start: Node, destiny: Node, graph: Graph) -> Path:
     """
 
     # Initialize the distance to all nodes as infinity, except for the starting node which is 0
-    distances = {node.location: float('inf') for node in graph.nodes}
-    distances[start.location] = 0
+    distances: Dict[Node, float] = {node: float('inf') for node in graph.nodes}
+    distances[start] = 0
     
     # Initialize the previous node for each node as None
-    previous_nodes = {node.location: None for node in graph.nodes}
+    previous_nodes: Dict[Node, Optional[Node]]= {node: None for node in graph.nodes}
     
     # Create a priority queue to store the nodes to visit
-    nodes_to_visit = [(0, start)]
+    nodes_to_visit: List[Tuple[Weight, Node]] = [(0, start)]
     
     while nodes_to_visit:
         # Get the node with the smallest distance from the start
@@ -231,9 +203,9 @@ def make_path(start: Node, destiny: Node, graph: Graph) -> Path:
             distance = current_distance + weight
             
             # If the new distance is smaller than the previous distance to the neighbor, update it
-            if distance < distances[neighbor.location]:
-                distances[neighbor.location] = distance
-                previous_nodes[neighbor.location] = current_node
+            if distance < distances[neighbor]:
+                distances[neighbor] = distance
+                previous_nodes[neighbor] = current_node
                 
                 # Add the neighbor to the priority queue to visit later
                 heapq.heappush(nodes_to_visit, (distance, neighbor))
@@ -241,14 +213,17 @@ def make_path(start: Node, destiny: Node, graph: Graph) -> Path:
     # If we couldn't reach the destination node, return None
     if distances[destiny] == float('inf'):
         return None
-    
+
     # Build the path by following the previous nodes from the destination to the start
-    path = []
-    current_node = destiny
+    path: Iterable[Edge] = []
+    current_node: Node | None = destiny
     while current_node is not None:
-        previous = previous_nodes[current_node.location]
-        path.append(get_edge(current_node, previous, graph))
-        current_node = previous_nodes[current_node.location]
+        previous = previous_nodes[current_node]
+        if previous != None:
+            edge = get_edge(current_node, previous, graph)
+            if edge != None:
+                path.append(edge)
+        current_node = previous
     
     # Return the path as a Path object
     return make_path_from_edge_list(start, path)
