@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Dict, Tuple, TypeAlias, Literal
+from typing import Dict, TypeAlias, Literal
 
 Location: TypeAlias = Literal[
     "AC",
