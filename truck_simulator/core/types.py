@@ -30,7 +30,19 @@ Location: TypeAlias = Literal[
     "SP",
     "TO",
 ]
-Path: TypeAlias = Dict[Location]
+Path: TypeAlias = Dict[Location, Location]
 Model: TypeAlias = Literal["car", "bus", "truck"]
 Icon: TypeAlias = Literal["🚗", "🚌", "🚚"]
-GeoLocation: TypeAlias = Tuple[float, float]
+
+@dataclass
+class GeoLocation:
+    """
+    A location on the map.
+
+    Attributes:
+        latitude (float): the latitude of the location.
+        longitude (float): the longitude of the location.
+    """
+
+    latitude: float
+    longitude: float

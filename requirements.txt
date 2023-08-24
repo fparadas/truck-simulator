@@ -3,3 +3,4 @@ pandas
 geopandas
 pandera
 pandera[geopandas]
+pytest
