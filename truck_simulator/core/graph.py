@@ -178,7 +178,8 @@ def make_path(start: Node, destiny: Node, graph: Graph) -> Optional[Path]:
     Returns:
         Path: the path between the two nodes.
     """
-
+    if start == destiny:
+        return make_path_from_edge_list(start, [make_edge(start, start)])
     # Initialize the distance to all nodes as infinity, except for the starting node which is 0
     distances: Dict[Node, float] = {node: float('inf') for node in graph.nodes}
     distances[start] = 0
@@ -219,10 +220,17 @@ def make_path(start: Node, destiny: Node, graph: Graph) -> Optional[Path]:
     current_node: Node | None = destiny
     while current_node is not None:
         previous = previous_nodes[current_node]
-        if previous != None:
-            edge = get_edge(current_node, previous, graph)
-            if edge != None:
-                path.append(edge)
+        match previous:
+            case None:
+                pass
+            case prev:
+                edge = get_edge(current_node, prev, graph)
+                match edge:
+                    case None:
+                        pass
+                    case e:
+                        path.append(e)
+
         current_node = previous
     
     # Return the path as a Path object

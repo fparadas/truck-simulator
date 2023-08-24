@@ -1,7 +1,7 @@
 import unittest
 from typing import Iterable
 from truck_simulator.core.graph import Node, Edge, make_edge, Path, make_path_from_edge_list, step, walk
-from truck_simulator.core.graph import Graph, make_graph, get_edge, get_neighborhood
+from truck_simulator.core.graph import Graph, make_graph, get_edge, get_neighborhood, make_path
 class TestGraph(unittest.TestCase):
 
     def test_make_edge(self):
@@ -71,7 +71,7 @@ class TestGraph(unittest.TestCase):
         graph = make_graph({node1, node2, node3}, {edge1, edge2})
         self.assertEqual(get_edge(node1, node2, graph), edge1)
         self.assertEqual(get_edge(node2, node3, graph), edge2)
-        self.assertEqual(get_edge(node1, node3, graph), None)
+        self.assertIsNone(get_edge(node1, node3, graph))
 
     def test_get_neighborhood(self):
         # Test getting the neighborhood of a node with no neighbors
@@ -89,8 +89,39 @@ class TestGraph(unittest.TestCase):
         self.assertEqual(get_neighborhood(node2, graph), {(node1, 1), (node3, 1)})
         self.assertEqual(get_neighborhood(node3, graph), {(node2, 1)})
 
-    # TODO test get_edge
     # TODO test make_path
+    def test_make_path(self):
+        # Test case 1: start and destiny are the same node
+        node: Node = "AP"
+        edge: Edge = make_edge(node, node)
+        graph: Graph = make_graph({node},{edge})
+        path: Path | None = make_path(node, node, graph)
+        match path:
+            case None:
+                self.fail("Path should not be None")
+            case Path(start, data):
+                self.assertEqual(data, {node: node})
+                self.assertEqual(start, node)
+
+        # Test case 2: there is no path between start and destiny
+        node1: Node = "AP"
+        node2: Node = "BA"
+        graph: Graph = make_graph({node1, node2}, set())
+        path = make_path(node1, node2, graph)
+        self.assertIsNone(path)
+
+        # Test case 3: there is a path between start and destiny
+        node1: Node = "AP"
+        node2: Node = "BA"
+        node3: Node = "CE"
+        edges = map(make_edge, *zip(*[(node1, node2), (node2, node3)]))
+        graph = make_graph({node1, node2, node3}, set(edges))
+        path = make_path(node1, node3, graph)
+        match path:
+            case None:
+                self.fail("Path should not be None")
+            case Path(start, data):
+                self.assertEqual(data, {node1: node2, node2: node3})
 
 if __name__ == "__main__":
     unittest.main()
